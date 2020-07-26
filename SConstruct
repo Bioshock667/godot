@@ -593,8 +593,6 @@ if selected_platform in platform_list:
         env.Append(CPPDEFINES=["PTRCALL_ENABLED"])
     if env["tools"]:
         env.Append(CPPDEFINES=["TOOLS_ENABLED"])
-    if env["tests"]:
-        env.Append(CPPDEFINES=["TESTS_ENABLED"])
     if env["disable_3d"]:
         if env["tools"]:
             print(
@@ -619,8 +617,9 @@ if selected_platform in platform_list:
     editor_module_list = ["regex"]
     if env["tools"] and not env.module_check_dependencies("tools", editor_module_list):
         print(
-            "Build option 'module_" + x + "_enabled=no' cannot be used with 'tools=yes' (editor), "
-            "only with 'tools=no' (export template)."
+            "Build option 'module_"
+            + x
+            + "_enabled=no' cannot be used with 'tools=yes' (editor), only with 'tools=no' (export template)."
         )
         Exit(255)
 
@@ -649,10 +648,6 @@ if selected_platform in platform_list:
                 )
             }
         )
-
-    # Enable test framework globally and inform it of configuration method.
-    if env["tests"]:
-        env.Append(CPPDEFINES=["DOCTEST_CONFIG_IMPLEMENT"])
 
     scons_cache_path = os.environ.get("SCONS_CACHE")
     if scons_cache_path != None:

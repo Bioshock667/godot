@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  csharp_project.h                                                     */
+/*  godot_view.h                                                         */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,15 +28,29 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef CSHARP_PROJECT_H
-#define CSHARP_PROJECT_H
+#import <UIKit/UIKit.h>
 
-#include "core/ustring.h"
+class String;
 
-namespace CSharpProject {
+@protocol DisplayLayer;
+@protocol GodotViewRendererProtocol;
 
-void add_item(const String &p_project_path, const String &p_item_type, const String &p_include);
+@interface GodotView : UIView <UIKeyInput>
 
-} // namespace CSharpProject
+@property(assign, nonatomic) id<GodotViewRendererProtocol> renderer;
 
-#endif // CSHARP_PROJECT_H
+@property(assign, readonly, nonatomic) BOOL isActive;
+
+@property(assign, nonatomic) BOOL useCADisplayLink;
+@property(strong, readonly, nonatomic) CALayer<DisplayLayer> *renderingLayer;
+@property(assign, readonly, nonatomic) BOOL canRender;
+
+@property(assign, nonatomic) NSTimeInterval renderingInterval;
+
+- (CALayer<DisplayLayer> *)initializeRenderingForDriver:(NSString *)driverName;
+- (void)stopRendering;
+- (void)startRendering;
+
+- (BOOL)becomeFirstResponderWithString:(String)p_existing;
+
+@end

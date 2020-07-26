@@ -2311,18 +2311,23 @@ DisplayServer::WindowID DisplayServerOSX::create_sub_window(WindowMode p_mode, u
 	_THREAD_SAFE_METHOD_
 
 	WindowID id = _create_window(p_mode, p_rect);
-	WindowData &wd = windows[id];
 	for (int i = 0; i < WINDOW_FLAG_MAX; i++) {
 		if (p_flags & (1 << i)) {
 			window_set_flag(WindowFlags(i), true, id);
 		}
 	}
+
+	return id;
+}
+
+void DisplayServerOSX::show_window(WindowID p_id) {
+	WindowData &wd = windows[p_id];
+
 	if (wd.no_focus) {
 		[wd.window_object orderFront:nil];
 	} else {
 		[wd.window_object makeKeyAndOrderFront:nil];
 	}
-	return id;
 }
 
 void DisplayServerOSX::_send_window_event(const WindowData &wd, WindowEvent p_event) {
@@ -2793,7 +2798,9 @@ void DisplayServerOSX::window_set_flag(WindowFlags p_flag, bool p_enabled, Windo
 		} break;
 		case WINDOW_FLAG_BORDERLESS: {
 			// OrderOut prevents a lose focus bug with the window
-			[wd.window_object orderOut:nil];
+			if ([wd.window_object isVisible]) {
+				[wd.window_object orderOut:nil];
+			}
 			wd.borderless = p_enabled;
 			if (p_enabled) {
 				[wd.window_object setStyleMask:NSWindowStyleMaskBorderless];
@@ -2807,7 +2814,13 @@ void DisplayServerOSX::window_set_flag(WindowFlags p_flag, bool p_enabled, Windo
 				[wd.window_object setFrame:frameRect display:NO];
 			}
 			_update_window(wd);
-			[wd.window_object makeKeyAndOrderFront:nil];
+			if ([wd.window_object isVisible]) {
+				if (wd.no_focus) {
+					[wd.window_object orderFront:nil];
+				} else {
+					[wd.window_object makeKeyAndOrderFront:nil];
+				}
+			}
 		} break;
 		case WINDOW_FLAG_ALWAYS_ON_TOP: {
 			wd.on_top = p_enabled;
@@ -2875,7 +2888,11 @@ void DisplayServerOSX::window_move_to_foreground(WindowID p_window) {
 	const WindowData &wd = windows[p_window];
 
 	[[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
-	[wd.window_object makeKeyAndOrderFront:nil];
+	if (wd.no_focus) {
+		[wd.window_object orderFront:nil];
+	} else {
+		[wd.window_object makeKeyAndOrderFront:nil];
+	}
 }
 
 bool DisplayServerOSX::window_can_draw(WindowID p_window) const {
@@ -3755,7 +3772,7 @@ DisplayServerOSX::DisplayServerOSX(const String &p_rendering_driver, WindowMode 
 			window_set_flag(WindowFlags(i), true, main_window);
 		}
 	}
-	[windows[main_window].window_object makeKeyAndOrderFront:nil];
+	show_window(MAIN_WINDOW_ID);
 
 #if defined(OPENGL_ENABLED)
 	if (rendering_driver == "opengl_es") {
